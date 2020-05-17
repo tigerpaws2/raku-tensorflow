@@ -15,6 +15,14 @@ DESCRIPTION
 
 Tensorflow is ...
 
+
+Tensorflow C api
+================
+
+This module initially implements the  Tensorflow C api, which does not support Tensorflow v2. The tensorflow libraries as well as supporting code are at https://www.tensorflow.org/install/lang_c
+
+Preliminary conversion of the header files via App::GPTrixie can be found in the `utils/header` directory. These are only there for comparison when new versions arrive. 
+
 AUTHOR
 ======
 
