@@ -1,0 +1,19 @@
+{
+  "authors" : [
+    "mike schmidt"
+  ],
+  "build-depends" : [ ],
+  "depends" : [ ],
+  "description" : "blah blah blah",
+  "license" : "Artistic-2.0",
+  "name" : "Tensorflow",
+  "perl" : "6.c",
+  "provides" : {
+    "Tensorflow" : "lib/Tensorflow.pm6"
+  },
+  "resources" : [ ],
+  "source-url" : "",
+  "tags" : [ ],
+  "test-depends" : [ ],
+  "version" : "0.0.1"
+}
