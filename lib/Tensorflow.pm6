@@ -6,7 +6,8 @@ unit class Tensorflow:ver<0.0.1>;
 
 =head1 NAME
 
-Tensorflow - blah blah blah
+Tensorflow - This is an interface to Tensorflow. It allows inline calls to
+tensorflow graphs and functions.
 
 =head1 SYNOPSIS
 
