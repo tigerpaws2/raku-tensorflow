@@ -13,7 +13,7 @@ INIT {
     }
 }
 
-constant LIB = 'libtensorflow.so.1';
+constant LIB = $lib;
 
 ## Enumerations
 
@@ -1906,12 +1906,7 @@ class TF_Tensor {
     method TF_TensorIsAligned(TF_Tensor  # const Typedef<TF_Tensor>->«TF_Tensor»*
                              ) is native(LIB) returns bool is export { * }
 
-
 }
-## Extras stuff
-
-## Functions
-
 
 
 #| TF_DataTypeSize returns the sizeof() for the underlying type corresponding
@@ -1921,16 +1916,10 @@ sub TF_DataTypeSize(int32 $dt # Typedef<TF_DataType>->«TF_DataType»
                    ) is native(LIB) returns size_t is export { * }
 
 
-
 #| TF_Version returns a string describing version information of the
 #| TensorFlow library. TensorFlow using semantic versioning.
 sub TF_Version(
 ) is native(LIB) returns Str is export { * }
-
-
-
-
-
 
 
 #| Register a listener method that processes printed messages.
