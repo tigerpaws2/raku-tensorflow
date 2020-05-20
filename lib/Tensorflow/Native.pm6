@@ -8,12 +8,13 @@ my $lib;
 
 INIT {
     # Load the needed library
-    without $lib = NativeLibs::Loader.load('libtensorflow.so.1') {
+    without $lib = NativeLibs::Loader.load( 'libtensorflow.so.1') {
         .fail;
     }
 }
 
-constant LIB = $lib;
+constant LIB = 'libtensorflow.so.1';
+
 
 ## Enumerations
 
@@ -76,6 +77,7 @@ enum TF_Code is export (
     TF_DATA_LOSS => 15
 );
 
+constant Opaque is export(:Opaque) = 'CPointer';
 
 class TF_Status is repr('CPointer') {...}
 class TF_Buffer is repr('CStruct') {...}
@@ -85,7 +87,7 @@ class TF_OperationDescription is repr('CPointer') {...}
 class TF_Operation is repr('CPointer') {...}
 class TF_Input is repr('CStruct') {...}
 class TF_Output is repr('CStruct') {...}
-class TF_Function is repr('CPointer') {...}
+class TF_Function is repr(Opaque) {...}
 class TF_FunctionOptions is repr('CPointer') {...}
 class TF_AttrMetadata is repr('CStruct') {...}
 class TF_ImportGraphDefOptions is repr('CPointer') {...}
@@ -99,10 +101,34 @@ class TF_ApiDefMap is repr('CPointer') {...}
 class TF_Server is repr('CPointer') {...}
 class TF_Tensor is repr('CPointer') {...}
 
+
+
+#| TF_DataTypeSize returns the sizeof() for the underlying type corresponding
+#| to the given TF_DataType enum value. Returns 0 for variable length types
+#| (eg. TF_STRING) or on failure.
+our sub TF_DataTypeSize(int32 $dt # Typedef<TF_DataType>->«TF_DataType»
+                   ) is native(LIB) returns size_t is export { * }
+
+
+#| TF_Version returns a string describing version information of the
+#| TensorFlow library. TensorFlow using semantic versioning.
+our sub TF_Version(
+) is native(LIB) returns Str is export { * }
+
+
+#| Register a listener method that processes printed messages.
+#|
+#| If any listeners are registered, the print operator will call all listeners
+#| with the printed messages and immediately return without writing to the
+#| logs.
+our sub TF_RegisterLogListener(&listener () # F:void ( )*
+                          ) is native(LIB)  is export { * }
+
+
 class TF_Status {
 
     #| Return a new status object.
-    sub TF_NewStatus(
+    method TF_NewStatus(
     ) is native(LIB) returns TF_Status is export { * }
 
     #| Delete a previously created status object.
@@ -124,7 +150,6 @@ class TF_Status {
     #| TF_OK.
     method TF_Message(TF_Status $s # const Typedef<TF_Status>->«TF_Status»*
                      ) is native(LIB) returns Str is export { * }
-
 
 }
 
@@ -437,8 +462,8 @@ class TF_Graph {
     #| all the returned TF_Functions. They must be deleted with TF_DeleteFunction.
     #| On error, returns 0, sets status to the encountered error, and the contents
     #| of funcs will be undefined.
-    method TF_GraphGetFunctions(TF_Graph                      $g # Typedef<TF_Graph>->«TF_Graph»*
-                             ,Pointer[Pointer]          $funcs # Typedef<TF_Function>->«TF_Function»**
+    method TF_GraphGetFunctions(TF_Graph                    $g # Typedef<TF_Graph>->«TF_Graph»*
+			     ,Pointer[Pointer]           $funcs # Typedef<TF_Function>->«TF_Function»**
                              ,int32                         $max_func # int
                              ,TF_Status                     $status # Typedef<TF_Status>->«TF_Status»*
                             ) is native(LIB) returns int32 is export { * }
@@ -1907,25 +1932,3 @@ class TF_Tensor {
                              ) is native(LIB) returns bool is export { * }
 
 }
-
-
-#| TF_DataTypeSize returns the sizeof() for the underlying type corresponding
-#| to the given TF_DataType enum value. Returns 0 for variable length types
-#| (eg. TF_STRING) or on failure.
-sub TF_DataTypeSize(int32 $dt # Typedef<TF_DataType>->«TF_DataType»
-                   ) is native(LIB) returns size_t is export { * }
-
-
-#| TF_Version returns a string describing version information of the
-#| TensorFlow library. TensorFlow using semantic versioning.
-sub TF_Version(
-) is native(LIB) returns Str is export { * }
-
-
-#| Register a listener method that processes printed messages.
-#|
-#| If any listeners are registered, the print operator will call all listeners
-#| with the printed messages and immediately return without writing to the
-#| logs.
-sub TF_RegisterLogListener(&listener () # F:void ( )*
-                          ) is native(LIB)  is export { * }
