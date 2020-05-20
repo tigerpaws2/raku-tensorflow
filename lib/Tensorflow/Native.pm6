@@ -79,7 +79,7 @@ enum TF_Code is export (
 
 constant Opaque is export(:Opaque) = 'CPointer';
 
-class TF_Status is repr('CPointer') {...}
+our class TF_Status is repr('CPointer') is export {...};
 class TF_Buffer is repr('CStruct') {...}
 class TF_SessionOptions is repr('CPointer') {...}
 class TF_Graph is repr('CPointer') {...}
@@ -125,14 +125,14 @@ our sub TF_RegisterLogListener(&listener () # F:void ( )*
                           ) is native(LIB)  is export { * }
 
 
-class TF_Status {
+our class TF_Status is export {
 
     #| Return a new status object.
-    method TF_NewStatus(
+    sub TF_NewStatus(
     ) is native(LIB) returns TF_Status is export { * }
 
     #| Delete a previously created status object.
-    method TF_DeleteStatus(TF_Status  # Typedef<TF_Status>->«TF_Status»*
+    method TF_DeleteStatus(  #@TF_Status  # Typedef<TF_Status>->«TF_Status»*
 			  ) is native(LIB)  is export { * }
 
     method TF_SetStatus(TF_Status                     $s # Typedef<TF_Status>->«TF_Status»*
@@ -141,16 +141,38 @@ class TF_Status {
                        ) is native(LIB)  is export { * }
 
     #| Return the code record in *s.
-    method TF_GetCode(TF_Status $s # const Typedef<TF_Status>->«TF_Status»*
+    method TF_GetCode( #TF_Status $s # const Typedef<TF_Status>->«TF_Status»*
                      ) is native(LIB) returns int32 is export { * }
 
     #| Return a pointer to the (null-terminated) error message in *s.  The
     #| return value points to memory that is only usable until the next
     #| mutation to *s.  Always returns an empty string if TF_GetCode(s) is
     #| TF_OK.
-    method TF_Message(TF_Status $s # const Typedef<TF_Status>->«TF_Status»*
+    method TF_Message( # TF_Status $s # const Typedef<TF_Status>->«TF_Status»*
                      ) is native(LIB) returns Str is export { * }
 
+    method new {
+	say 'TF_Status called';
+	TF_NewStatus(); 
+    }
+
+    method SetStatus(Int $code, Str $mesg) {
+	self.TF_Status($code,$mesg);
+    }
+
+    method GetCode() {
+	self.GetCode();
+    }
+
+    method Message() {
+	self.TF_GetCode();
+    }
+
+    submethod DESTROY {
+	say 'TF_Status DESTROY called';
+	self.TF_DeleteStatus();
+    }
+    
 }
 
 #| Encode the string `src` (`src_len` bytes long) into `dst` in the format
@@ -160,7 +182,7 @@ class TF_Status {
 #|
 #| On success returns the size in bytes of the encoded string.
 #| Returns an error into `status` otherwise.
-sub TF_StringEncode(Str                           $src # const char*
+our sub TF_StringEncode(Str                           $src # const char*
   ,size_t                        $src_len # Typedef<size_t>->«long unsigned int»
   ,Str                           $dst # char*
   ,size_t                        $dst_len # Typedef<size_t>->«long unsigned int»
@@ -175,7 +197,7 @@ sub TF_StringEncode(Str                           $src # const char*
 #| `*dst` and `*dst_len` are undefined and an error is set in `status`.
 #|
 #| Does not read memory more than `src_len` bytes beyond `src`.
-sub TF_StringDecode(Str                           $src # const char*
+our sub TF_StringDecode(Str                           $src # const char*
   ,size_t                        $src_len # Typedef<size_t>->«long unsigned int»
   ,Pointer[Str]                  $dst # const char**
   ,Pointer[size_t]               $dst_len # Typedef<size_t>->«long unsigned int»*
@@ -184,7 +206,7 @@ sub TF_StringDecode(Str                           $src # const char*
 
 #| Return the size in bytes required to encode a string `len` bytes long into a
 #| TF_STRING tensor.
-sub TF_StringEncodedSize(size_t $len # Typedef<size_t>->«long unsigned int»
+our sub TF_StringEncodedSize(size_t $len # Typedef<size_t>->«long unsigned int»
                         ) is native(LIB) returns size_t is export { * }
 
 
