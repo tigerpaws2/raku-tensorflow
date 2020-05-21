@@ -77,9 +77,9 @@ enum TF_Code is export (
     TF_DATA_LOSS => 15
 );
 
-constant Opaque is export(:Opaque) = 'CPointer';
+#constant Opaque is export(:Opaque) = 'CPointer';
 
-our class TF_Status is repr('CPointer') is export {...};
+class TF_Status is repr('CPointer') {...};
 class TF_Buffer is repr('CStruct') {...}
 class TF_SessionOptions is repr('CPointer') {...}
 class TF_Graph is repr('CPointer') {...}
@@ -87,7 +87,7 @@ class TF_OperationDescription is repr('CPointer') {...}
 class TF_Operation is repr('CPointer') {...}
 class TF_Input is repr('CStruct') {...}
 class TF_Output is repr('CStruct') {...}
-class TF_Function is repr(Opaque) {...}
+class TF_Function is repr('CPointer') {...}
 class TF_FunctionOptions is repr('CPointer') {...}
 class TF_AttrMetadata is repr('CStruct') {...}
 class TF_ImportGraphDefOptions is repr('CPointer') {...}
@@ -106,13 +106,13 @@ class TF_Tensor is repr('CPointer') {...}
 #| TF_DataTypeSize returns the sizeof() for the underlying type corresponding
 #| to the given TF_DataType enum value. Returns 0 for variable length types
 #| (eg. TF_STRING) or on failure.
-our sub TF_DataTypeSize(int32 $dt # Typedef<TF_DataType>->«TF_DataType»
+sub TF_DataTypeSize(int32 $dt # Typedef<TF_DataType>->«TF_DataType»
                    ) is native(LIB) returns size_t is export { * }
 
 
 #| TF_Version returns a string describing version information of the
 #| TensorFlow library. TensorFlow using semantic versioning.
-our sub TF_Version(
+sub TF_Version(
 ) is native(LIB) returns Str is export { * }
 
 
@@ -121,35 +121,36 @@ our sub TF_Version(
 #| If any listeners are registered, the print operator will call all listeners
 #| with the printed messages and immediately return without writing to the
 #| logs.
-our sub TF_RegisterLogListener(&listener () # F:void ( )*
-                          ) is native(LIB)  is export { * }
+sub TF_RegisterLogListener(&listener () # F:void ( )*
+                          ) is native(LIB) is export { * }
 
 
-our class TF_Status is export {
+our class TF_Status {
 
     #| Return a new status object.
     sub TF_NewStatus(
-    ) is native(LIB) returns TF_Status is export { * }
+    ) is native(LIB) returns TF_Status { * }
 
     #| Delete a previously created status object.
-    method TF_DeleteStatus(  #@TF_Status  # Typedef<TF_Status>->«TF_Status»*
-			  ) is native(LIB)  is export { * }
+    method !TF_DeleteStatus(  #@TF_Status  # Typedef<TF_Status>->«TF_Status»*
+			  ) is native(LIB) { * }
 
-    method TF_SetStatus(TF_Status                     $s # Typedef<TF_Status>->«TF_Status»*
-			,int32                         $code # Typedef<TF_Code>->«TF_Code»
-			,Str                           $msg # const char*
-                       ) is native(LIB)  is export { * }
+    method !TF_SetStatus(
+	#TF_Status                     $s # Typedef<TF_Status>->«TF_Status»*
+	int32                         $code # Typedef<TF_Code>->«TF_Code»
+	,Str                           $msg # const char*
+    ) is native(LIB) { * }
 
     #| Return the code record in *s.
-    method TF_GetCode( #TF_Status $s # const Typedef<TF_Status>->«TF_Status»*
-                     ) is native(LIB) returns int32 is export { * }
+    method !TF_GetCode( #TF_Status $s # const Typedef<TF_Status>->«TF_Status»*
+                     ) is native(LIB) returns int32 { * }
 
     #| Return a pointer to the (null-terminated) error message in *s.  The
     #| return value points to memory that is only usable until the next
     #| mutation to *s.  Always returns an empty string if TF_GetCode(s) is
     #| TF_OK.
-    method TF_Message( # TF_Status $s # const Typedef<TF_Status>->«TF_Status»*
-                     ) is native(LIB) returns Str is export { * }
+    method !TF_Message( # TF_Status $s # const Typedef<TF_Status>->«TF_Status»*
+                     ) is native(LIB) returns Str { * }
 
     method new {
 	say 'TF_Status called';
@@ -157,20 +158,20 @@ our class TF_Status is export {
     }
 
     method SetStatus(Int $code, Str $mesg) {
-	self.TF_Status($code,$mesg);
+	self!TF_SetStatus($code,$mesg);
     }
 
     method GetCode() {
-	self.GetCode();
+	self!TF_GetCode();
     }
 
     method Message() {
-	self.TF_GetCode();
+	self.TF_Message();
     }
 
     submethod DESTROY {
 	say 'TF_Status DESTROY called';
-	self.TF_DeleteStatus();
+	self!TF_DeleteStatus();
     }
     
 }
@@ -182,12 +183,13 @@ our class TF_Status is export {
 #|
 #| On success returns the size in bytes of the encoded string.
 #| Returns an error into `status` otherwise.
-our sub TF_StringEncode(Str                           $src # const char*
+sub TF_StringEncode(
+    Str                          $src # const char*
   ,size_t                        $src_len # Typedef<size_t>->«long unsigned int»
   ,Str                           $dst # char*
   ,size_t                        $dst_len # Typedef<size_t>->«long unsigned int»
   ,TF_Status                     $status # Typedef<TF_Status>->«TF_Status»*
-                   ) is native(LIB) returns size_t is export { * }
+) is native(LIB) returns size_t is export { * }
 
 #| Decode a string encoded using TF_StringEncode.
 #|
@@ -197,17 +199,19 @@ our sub TF_StringEncode(Str                           $src # const char*
 #| `*dst` and `*dst_len` are undefined and an error is set in `status`.
 #|
 #| Does not read memory more than `src_len` bytes beyond `src`.
-our sub TF_StringDecode(Str                           $src # const char*
+sub TF_StringDecode(
+    Str                          $src # const char*
   ,size_t                        $src_len # Typedef<size_t>->«long unsigned int»
   ,Pointer[Str]                  $dst # const char**
   ,Pointer[size_t]               $dst_len # Typedef<size_t>->«long unsigned int»*
   ,TF_Status                     $status # Typedef<TF_Status>->«TF_Status»*
-                   ) is native(LIB) returns size_t is export { * }
+) is native(LIB) returns size_t is export { * }
 
 #| Return the size in bytes required to encode a string `len` bytes long into a
 #| TF_STRING tensor.
-our sub TF_StringEncodedSize(size_t $len # Typedef<size_t>->«long unsigned int»
-                        ) is native(LIB) returns size_t is export { * }
+sub TF_StringEncodedSize(
+    size_t $len # Typedef<size_t>->«long unsigned int»
+) is native(LIB) returns size_t is export { * }
 
 
 class __va_list_tag is repr('CStruct') is export {
@@ -231,19 +235,22 @@ class TF_Buffer {
 
     #| Makes a copy of the input and sets an appropriate deallocator.  Useful for
     #| passing in read-only, input protobufs.
-    sub TF_NewBufferFromString(Pointer                       $proto # const void*
-                               ,size_t                        $proto_len # Typedef<size_t>->«long unsigned int»
-                              ) is native(LIB) returns TF_Buffer is export { * }
+    sub TF_NewBufferFromString(
+	Pointer                       $proto # const void*
+        ,size_t                        $proto_len # Typedef<size_t>->«long unsigned int»
+    ) is native(LIB) returns TF_Buffer { * }
 
     #| Useful for passing *out* a protobuf.
     sub TF_NewBuffer(
-    ) is native(LIB) returns TF_Buffer is export { * }
+    ) is native(LIB) returns TF_Buffer { * }
 
-    method TF_DeleteBuffer(TF_Buffer  # Typedef<TF_Buffer>->«TF_Buffer»*
-                       ) is native(LIB)  is export { * }
+    method !TF_DeleteBuffer(
+	TF_Buffer  # Typedef<TF_Buffer>->«TF_Buffer»*
+    ) is native(LIB)  { * }
 
-    method TF_GetBuffer(TF_Buffer $buffer # Typedef<TF_Buffer>->«TF_Buffer»*
-                    ) is native(LIB) returns TF_Buffer is export { * }
+    method !TF_GetBuffer(
+	TF_Buffer $buffer # Typedef<TF_Buffer>->«TF_Buffer»*
+    ) is native(LIB) returns TF_Buffer { * }
 
     #| Get the OpList of all OpDefs defined in this address space.
     #| Returns a TF_Buffer, ownership of which is transferred to the caller
@@ -252,21 +259,24 @@ class TF_Buffer {
     #| The data in the buffer will be the serialized OpList proto for ops registered
     #| in this address space.
     sub TF_GetAllOpList(
-    ) is native(LIB) returns TF_Buffer is export { * }
+    ) is native(LIB) returns TF_Buffer { * }
 
 
     #| Returns a serialized KernelList protocol buffer containing KernelDefs for all
     #| registered kernels.
-    sub TF_GetAllRegisteredKernels(TF_Status $status # Typedef<TF_Status>->«TF_Status»*
-				  ) is native(LIB) returns TF_Buffer is export { * }
+    method !TF_GetAllRegisteredKernels(
+	TF_Status $status # Typedef<TF_Status>->«TF_Status»*
+    ) is native(LIB) returns TF_Buffer { * }
 
     #| Returns a serialized KernelList protocol buffer containing KernelDefs for all
     #| kernels registered for the operation named `name`.
-    sub TF_GetRegisteredKernelsForOp(Str                           $name # const char*
-                                     ,TF_Status                     $status # Typedef<TF_Status>->«TF_Status»*
-                                    ) is native(LIB) returns TF_Buffer is export { * }
+    sub TF_GetRegisteredKernelsForOp(
+	Str                           $name # const char*
+        ,TF_Status                     $status # Typedef<TF_Status>->«TF_Status»*
+    ) is native(LIB) returns TF_Buffer { * }
 
-
+    #####
+    
 }
 
 
@@ -274,7 +284,8 @@ class TF_SessionOptions {
 
     #| Return a new options object.
     sub TF_NewSessionOptions(
-    ) is native(LIB) returns TF_SessionOptions is export { * }
+    ) is native(LIB) returns TF_SessionOptions { * }
+
 
     #| Set the target in TF_SessionOptions.options.
     #| target can be empty, a single entry, or a comma separated list of entries.
@@ -282,30 +293,55 @@ class TF_SessionOptions {
     #| "local"
     #| ip:port
     #| host:port
-    method TF_SetTarget(TF_SessionOptions             $options # Typedef<TF_SessionOptions>->«TF_SessionOptions»*
-                     ,Str                           $target # const char*
-                    ) is native(LIB)  is export { * }
+    method !TF_SetTarget(
+	#TF_SessionOptions,             $options # Typedef<TF_SessionOptions>->«TF_SessionOptions»*
+        Str                           $target # const char*
+    ) is native(LIB) { * }
 
     #| Set the config in TF_SessionOptions.options.
     #| config should be a serialized tensorflow.ConfigProto proto.
     #| If config was not parsed successfully as a ConfigProto, record the
     #| error information in *status.
-    method TF_SetConfig(TF_SessionOptions             $options # Typedef<TF_SessionOptions>->«TF_SessionOptions»*
-                     ,Pointer                       $proto # const void*
-                     ,size_t                        $proto_len # Typedef<size_t>->«long unsigned int»
-                     ,TF_Status                     $status # Typedef<TF_Status>->«TF_Status»*
-                    ) is native(LIB)  is export { * }
+    method !TF_SetConfig(
+	#TF_SessionOptions,             $options # Typedef<TF_SessionOptions>->«TF_SessionOptions»*
+        Pointer                       $proto # const void*
+        ,size_t                        $proto_len # Typedef<size_t>->«long unsigned int»
+        ,TF_Status                     $status # Typedef<TF_Status>->«TF_Status»*
+    ) is native(LIB) { * }
 
     #| Destroy an options object.
-    method TF_DeleteSessionOptions(TF_SessionOptions  # Typedef<TF_SessionOptions>->«TF_SessionOptions»*
-                               ) is native(LIB)  is export { * }
+    method !TF_DeleteSessionOptions(
+	#TF_SessionOptions  # Typedef<TF_SessionOptions>->«TF_SessionOptions»*
+    ) is native(LIB)  { * }
 
-    method TF_Reset(TF_SessionOptions             $opt # const Typedef<TF_SessionOptions>->«TF_SessionOptions»*
-		 ,Pointer[Str]                  $containers # const char**
-		 ,int32                         $ncontainers # int
-		 ,TF_Status                     $status # Typedef<TF_Status>->«TF_Status»*
-		) is native(LIB)  is export { * }
+    method !TF_Reset(
+	#TF_SessionOptions             $opt # const Typedef<TF_SessionOptions>->«TF_SessionOptions»*
+	Pointer[Str]                   $containers # const char**
+	,int32                         $ncontainers # int
+	,TF_Status                     $status # Typedef<TF_Status>->«TF_Status»*
+    ) is native(LIB)  { * }
 
+    ######
+    
+    method new() {
+	TF_NewSessionOptions();
+    }
+    
+    method SetTarget(Str $str) {
+	self!TF_SetTarget($str);
+    }
+    
+    method SetConfig(Pointer $ptr, size_t $size, TF_Status $status) {
+	self!TF_SetConfig($ptr, $size, $status);
+    }
+    
+    submethod DESTROY {
+	self!TF_DeleteSessionOptions;
+    }
+    
+    method Reset( Pointer[Str] $ptr, int32 $count, TF_Status $status) {
+	self!TF_Reset($ptr, $count, $status);
+    }
 }
 
 
